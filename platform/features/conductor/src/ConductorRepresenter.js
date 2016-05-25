@@ -130,13 +130,13 @@ define(
                 conductor.domainOptions().map(makeOption);
             conductorScope.ngModel.domain = conductor.domain().key;
             conductorScope.parameters = {};
-
+/*
             conductorScope
                 .$watch('ngModel.conductor.inner.start', updateConductorInner);
             conductorScope
                 .$watch('ngModel.conductor.inner.end', updateConductorInner);
             conductorScope
-                .$watch('ngModel.domain', updateDomain);
+                .$watch('ngModel.domain', updateDomain);*/
         };
 
         ConductorRepresenter.prototype.conductorScope = function (s) {
