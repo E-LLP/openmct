@@ -108,8 +108,8 @@ define(
 
             // Change the displayable bounds
             function setBasePanZoom(bounds) {
-                var start = bounds.start,
-                    end = bounds.end;
+                var start = bounds.start(),
+                    end = bounds.end();
                 if (updater) {
                     updater.setDomainBounds(start, end);
                     self.update();
@@ -227,11 +227,11 @@ define(
             }
 
             // Respond to a display bounds change (requery for data)
-            function changeDisplayBounds(event, bounds) {
+            function changeDisplayBounds(bounds) {
                 var domainAxis = $scope.axes[0];
 
-                domainAxis.chooseOption(bounds.domain);
-                updateDomainFormat();
+                //domainAxis.chooseOption(bounds.domain);
+                //updateDomainFormat();
                 setBasePanZoom(bounds);
                 requery();
             }
@@ -261,8 +261,11 @@ define(
             // Subscribe to telemetry when a domain object becomes available
             $scope.$watch('domainObject', subscribe);
 
+            MCT.conductor.bounds.addListener(changeDisplayBounds);
+
+
             // Respond to external bounds changes
-            $scope.$on("telemetry:display:bounds", changeDisplayBounds);
+            //$scope.$on("telemetry:display:bounds", changeDisplayBounds);
 
             // Unsubscribe when the plot is destroyed
             $scope.$on("$destroy", releaseSubscription);
