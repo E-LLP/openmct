@@ -34,7 +34,8 @@ requirejs.config({
         "screenfull": "bower_components/screenfull/dist/screenfull.min",
         "text": "bower_components/text/text",
         "uuid": "bower_components/node-uuid/uuid",
-        "zepto": "bower_components/zepto/zepto.min"
+        "zepto": "bower_components/zepto/zepto.min",
+        "EventEmitter": "bower_components/eventemitter3/index"
     },
     "shim": {
         "angular": {
@@ -42,6 +43,9 @@ requirejs.config({
         },
         "angular-route": {
             "deps": ["angular"]
+        },
+        "EventEmitter": {
+            "exports": "EventEmitter"
         },
         "moment-duration-format": {
             "deps": ["moment"]

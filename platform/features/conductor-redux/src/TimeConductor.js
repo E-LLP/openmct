@@ -21,13 +21,123 @@
  *****************************************************************************/
 
 define([
-
-], function () {
+    "EventEmitter",
+    "./UTCTimeSystem"
+], function (EventEmitter, UTCTimeSystem) {
 
     function TimeConductor() {
-        this.bounds = {};
-        this.bounds.inner = new TimeConductorBounds();
+        EventEmitter.call(this);
+
+        //The Time System
+        this.system = new UTCTimeSystem();
+        //The Time Of Interest
+        this.toi = undefined;
+
+        this.bounds = {
+            start: undefined,
+            end: undefined
+        };
+
+        this.modes = {
+            FIXED: fixedMode.bind(undefined, this),
+            RELATIVE: relativeMode.bind(undefined, this)
+        };
+
+        //Default to fixed mode
+        this.modeVal = this.modes.FIXED;
     }
 
-    return TimeRangeController;
+    function relativeMode (conductor, options) {
+        conductor.modes.RELATIVE.options = options;
+
+        /**
+         * Deltas can be specified for start and end. An end delta will mean
+         * that the end bound is always in the future by 'endDelta' units
+         */
+        options.startDelta = options.startDelta || conductor.system.DEFAULT_DELTA;
+        options.endDelta = options.endDelta || 0;
+
+        /**
+         * If a tick source is specified, listen for ticks
+         */
+        if (options.tickSource) {
+            options.tickSource.on("tick", function () {
+                var now = conductor.timeSystem.now();
+                conductor.bounds({
+                    start: now - startDelta,
+                    end: now
+                });
+            });
+        }
+        return conductor.modes.RELATIVE;
+    }
+
+    function fixedMode (conductor, options) {
+        //TODO: What are the options for fixed mode?
+        conductor.modes.FIXED.options = options;
+
+        return conductor.modes.FIXED;
+    }
+
+    TimeConductor.prototype = Object.create(EventEmitter.prototype);
+
+    /**
+     * Validate the given bounds. This can be used for pre-validation of
+     * bounds, for example by views validating user inputs.
+     * @param bounds The start and end time of the conductor.
+     * @returns {string | true} A validation error, or true if valid
+     */
+    TimeConductor.prototype.validateBounds = function (bounds) {
+        if (!bounds.start ||
+            !bounds.end ||
+            isNaN(bounds.start) ||
+            isNaN(bounds.end)
+        ) {
+            return "Start and end must be specified as integer values";
+        } else if (bounds.start > bounds.end){
+            return "Specified start date exceeds end bound";
+        }
+        return true;
+    };
+
+    function throwOnError(validationResult) {
+        if (validationResult !== true) {
+            throw validationResult;
+        }
+    }
+
+    TimeConductor.prototype.mode = function (newMode) {
+        if (arguments.length > 0) {
+            this.modeVal = newMode;
+            this.emit('refresh', this);
+        }
+        return this.modeVal;
+    };
+
+    TimeConductor.prototype.bounds = function (newBounds) {
+        if (arguments.length > 0) {
+            throwOnError(this.validateBounds(newBounds));
+            this.bounds = newBounds;
+            this.emit('bounds', this.bounds);
+        }
+        return this.bounds;
+    };
+
+    TimeConductor.prototype.timeSystem = function (newTimeSystem) {
+        if (arguments.length > 0) {
+            this.system = newTimeSystem;
+            this.emit('refresh', this);
+        }
+        return this.system;
+    };
+
+    TimeConductor.prototype.timeOfInterest = function (newTOI) {
+        if (arguments.length > 0) {
+            this.toi = newTOI;
+            this.emit('toi');
+        }
+        return this.toi;
+    };
+
+    return TimeConductor;
 });
