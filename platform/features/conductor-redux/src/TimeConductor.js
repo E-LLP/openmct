@@ -22,8 +22,10 @@
 
 define([
     "EventEmitter",
-    "./UTCTimeSystem"
-], function (EventEmitter, UTCTimeSystem) {
+    "./UTCTimeSystem",
+    "./modes/RelativeMode",
+    "./modes/FixedMode"
+], function (EventEmitter, UTCTimeSystem, RelativeMode, FixedMode) {
 
     function TimeConductor() {
         EventEmitter.call(this);
@@ -38,45 +40,8 @@ define([
             end: undefined
         };
 
-        this.modes = {
-            FIXED: fixedMode.bind(undefined, this),
-            RELATIVE: relativeMode.bind(undefined, this)
-        };
-
         //Default to fixed mode
-        this.modeVal = this.modes.FIXED;
-    }
-
-    function relativeMode (conductor, options) {
-        conductor.modes.RELATIVE.options = options;
-
-        /**
-         * Deltas can be specified for start and end. An end delta will mean
-         * that the end bound is always in the future by 'endDelta' units
-         */
-        options.startDelta = options.startDelta || conductor.system.DEFAULT_DELTA;
-        options.endDelta = options.endDelta || 0;
-
-        /**
-         * If a tick source is specified, listen for ticks
-         */
-        if (options.tickSource) {
-            options.tickSource.on("tick", function () {
-                var now = conductor.timeSystem.now();
-                conductor.bounds({
-                    start: now - startDelta,
-                    end: now
-                });
-            });
-        }
-        return conductor.modes.RELATIVE;
-    }
-
-    function fixedMode (conductor, options) {
-        //TODO: What are the options for fixed mode?
-        conductor.modes.FIXED.options = options;
-
-        return conductor.modes.FIXED;
+        this.modeVal = new FixedMode();
     }
 
     TimeConductor.prototype = Object.create(EventEmitter.prototype);
@@ -110,6 +75,7 @@ define([
         if (arguments.length > 0) {
             this.modeVal = newMode;
             this.emit('refresh', this);
+            newMode.initialize();
         }
         return this.modeVal;
     };
