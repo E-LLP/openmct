@@ -59,19 +59,38 @@ telemetry API and paint it into the Time Conductor UI
 ``` javascript
 function loadSession(session) {
     var tc = MCT.conductor;
-    tc.timeSystem(session.metadata.timeSystem);
+    tc.timeSystem(session.timeSystem());
     
     //Set start and end modes to fixed date
-    tc.startMode(tc.Modes.FIXED);
-    tc.endMode(tc.Modes.FIXED);
-    
+    tc.mode(new FixedMode());
+        
     //Set both inner and outer bounds
-    tc.bounds.inner.start.time(session.metadata.firstTime);
-    tc.bounds.inner.end.time(session.metadata.lastTime);
-    tc.bounds.outer.start.time(session.metadata.firstTime);
-    tc.bounds.outer.end.time(session.metadata.lastTime);
+    tc.bounds({start: session.start(), end: session.end()});
 }
 ```
+
+### 2. Real-time session is loaded, setting custom start and end deltas 
+``` javascript
+function loadSession(session) {
+    var tc = MCT.conductor;
+    // Could have a central ticking source somewhere. Actually not 
+    // quite sure what to do with tick sources yet.
+    
+    var tickSource = new Clock();
+    tickSource.start();
+    
+    tc.timeSystem(session.timeSystem());
+    
+    //Set start and end modes to fixed date
+    tc.mode(new RealtimeMode({tickSource: tickSource}));
+        
+    //Set both inner and outer bounds
+    tc.bounds.inner.start.time(session.start());
+    tc.bounds.inner.end.time(session.end());
+}
+```
+
+
 ### 2. User changes time of interest
 ```javascript
 //Somewhere in the TimeConductorController...
